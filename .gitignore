@@ -1,0 +1,27 @@
+# Created by https://www.toptal.com/developers/gitignore/api/python,streamlit,vscode,env
+
+### Python ###
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtualenv
+env/
+venv/
+ENV/
+.venv/
+...
+
+### Streamlit ###
+.streamlit/
+.streamlit/config.toml
+.streamlit/cache/
+
+### VSCode ###
+.vscode/
+
+### Environment files ###
+.env
+.env.*
+*.env
