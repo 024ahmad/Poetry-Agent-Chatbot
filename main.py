@@ -7,10 +7,12 @@ import speech_recognition as sr
 from gtts import gTTS
 import tempfile
 import os
+import io
+import base64
 
 load_dotenv()
 
-# 🎭 Sub-agents
+# 🎭 Sub-agents (Same as before)
 lyric_agent = Agent(
     name="Lyric Poetry Agent",
     instructions="""
@@ -32,7 +34,7 @@ dramatic_agent = Agent(
     """
 )
 
-# 🤖 Parent agent
+# 🤖 Parent agent (Same as before)
 poet_parent_agent = Agent(
     name="Poetry Parent Agent",
     instructions="""
@@ -87,16 +89,19 @@ def speech_to_text():
             st.error(f"❌ **Error:** {e}")
             return None
 
-# 🔊 Text-to-Speech Function
+# 🔊 Improved Text-to-Speech Function with MP3 Download
 def text_to_speech(text, language='en'):
-    """Convert text to voice"""
+    """Convert text to voice and return audio bytes"""
     try:
         tts = gTTS(text=text, lang=language, slow=False)
         
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp_file:
-            tts.save(tmp_file.name)
-            return tmp_file.name
-            
+        # Create bytes buffer instead of temporary file
+        audio_buffer = io.BytesIO()
+        tts.write_to_fp(audio_buffer)
+        audio_buffer.seek(0)
+        
+        return audio_buffer
+        
     except Exception as e:
         st.error(f"**Voice generation error:** {e}")
         return None
@@ -178,6 +183,19 @@ st.markdown("""
         transform: translateY(-2px) !important;
         box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3) !important;
     }
+    .download-btn {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border: none !important;
+        padding: 0.6em 1.5em !important;
+        border-radius: 8px !important;
+        transition: all 0.3s ease !important;
+    }
+    .download-btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3) !important;
+    }
     .stTextArea textarea {
         border-radius: 12px;
         border: 2px solid #e9ecef;
@@ -229,6 +247,8 @@ if 'poetry_generated' not in st.session_state:
     st.session_state.poetry_generated = False
 if 'poetry_result' not in st.session_state:
     st.session_state.poetry_result = None
+if 'audio_bytes' not in st.session_state:
+    st.session_state.audio_bytes = None
 
 # 🎤 Voice Input Section
 st.markdown('<div class="section-header">🎤 Voice Input</div>', unsafe_allow_html=True)
@@ -303,13 +323,26 @@ if generate_clicked and st.session_state.final_input.strip():
             if enable_voice and poetry_result.final_output:
                 st.markdown("### 🔊 **Audio Version**")
                 with st.spinner("🎵 **Generating audio version...**"):
-                    audio_file = text_to_speech(poetry_result.final_output)
+                    audio_buffer = text_to_speech(poetry_result.final_output)
                     
-                    if audio_file:
-                        audio_bytes = open(audio_file, 'rb').read()
-                        st.audio(audio_bytes, format='audio/mp3')
-                        os.unlink(audio_file)
+                    if audio_buffer:
+                        # Store audio bytes in session state for download
+                        st.session_state.audio_bytes = audio_buffer.getvalue()
+                        
+                        # Display audio player
+                        st.audio(audio_buffer, format='audio/mp3')
                         st.success("🔊 **Audio ready! Click play to listen**")
+                        
+                        # Download button for MP3
+                        st.markdown("### 💾 **Download Audio**")
+                        st.download_button(
+                            label="📥 Download MP3",
+                            data=st.session_state.audio_bytes,
+                            file_name="generated_poetry.mp3",
+                            mime="audio/mp3",
+                            key="download_audio"
+                        )
+                        st.info("🎧 **You can share this MP3 file with anyone**")
                         
         except Exception as e:
             st.error(f"❌ **Generation Error:** {e}")
@@ -322,6 +355,16 @@ if st.session_state.poetry_generated and st.session_state.poetry_result:
     st.markdown("---")
     st.markdown("### 📖 **Previous Poem**")
     st.markdown(f'<div class="poem-box">{st.session_state.poetry_result.final_output}</div>', unsafe_allow_html=True)
+    
+    # Show download button for previous poem if audio exists
+    if st.session_state.audio_bytes:
+        st.download_button(
+            label="📥 Download Previous Poem MP3",
+            data=st.session_state.audio_bytes,
+            file_name="previous_poetry.mp3",
+            mime="audio/mp3",
+            key="download_previous_audio"
+        )
 
 # 📚 Instructions Section
 with st.expander("📖 **How to Use This Application**", expanded=False):
@@ -340,6 +383,7 @@ with st.expander("📖 **How to Use This Application**", expanded=False):
     
     #### **Features:**
     - **Voice Output**: Listen to your poem (enable checkbox)
+    - **MP3 Download**: Download and share your poem as MP3
     - **Multiple Styles**: AI chooses between lyric, narrative, or dramatic poetry
     - **Professional Quality**: Industry-standard AI agents
     
@@ -378,6 +422,6 @@ with feature_col2:
 with feature_col3:
     with st.container():
         st.markdown('<div class="feature-card">', unsafe_allow_html=True)
-        st.markdown("### 🔊 **Audio Output**")
-        st.markdown("Listen to your generated poems with high-quality text-to-speech technology.")
+        st.markdown("### 🔊 **MP3 Audio**")
+        st.markdown("Download and share your generated poems as MP3 files with high-quality audio.")
         st.markdown('</div>', unsafe_allow_html=True)
