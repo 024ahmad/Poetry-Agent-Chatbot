@@ -8,7 +8,6 @@ dependencies = [
     "audio-recorder-streamlit>=0.0.10",
     "gtts>=2.5.4",
     "openai-agents>=0.2.3",
-    "pyaudio>=0.2.14",
     "python-dotenv>=1.1.1",
     "pyttsx3>=2.99",
     "speechrecognition>=3.14.3",
