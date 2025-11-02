@@ -3,4 +3,4 @@ python-dotenv
 streamlit
 speechrecognition
 gtts
-pyaudio
+audio-recorder-streamlit

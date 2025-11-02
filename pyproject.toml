@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "audio-recorder-streamlit>=0.0.10",
     "gtts>=2.5.4",
     "openai-agents>=0.2.3",
     "pyaudio>=0.2.14",
